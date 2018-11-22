@@ -234,14 +234,69 @@ When a job with the specified Active Job id is not present it will appending the
 
 ## Playing with "sbmjob"
 
-You can play and study this application:
+Similarly to previous traininig projects you can easily install the project:
+
+```
+                    Simplify usage of Rails new (RAILSNEW)             
+                                                                       
+Immettere le scelte e premere Invio.                                   
+                                                                       
+New Rails Application Name . . . > TrainMeOnPowerRuby                  
+Apache HTTP Instance . . . . . . > SBMJOB        Character value       
+Apache Instance Port . . . . . . > 12345         Number                
+Ruby Web Server Port . . . . . . > 54321         Number                
+Creation mode  . . . . . . . . . > *GITHUB       *NEW, *NONE, *GITHUB  
+GitHub: username . . . . . . . .                                       
+GitHub: password . . . . . . . .                                       
+GitHub: PowerRuby: project . . .   'DE_train_05'  
+                     
+```
+
+Then stop the services started:
+
+```
+ENDTCPSVR SERVER(*HTTP) HTTPSVR(SBMJOB) 
+POWER_RUBY/RAILSSVR ACTION(*END) APP('/www/SBMJOB/htdocs/TrainMeOnPowerRuby/current') 
+```
+
+Uncomment the WebSocket Tunneling options needed by Action Cable (see project **DE\_train\_03** for details):
+
+```
+##                                                                             
+## PowerRuby                                                                   
+##                                                                             
+ LoadModule proxy_module /QSYS.LIB/QHTTPSVR.LIB/QZSRCORE.SRVPGM                
+ LoadModule proxy_ftp_module /QSYS.LIB/QHTTPSVR.LIB/QZSRCORE.SRVPGM            
+ LoadModule proxy_http_module /QSYS.LIB/QHTTPSVR.LIB/QZSRCORE.SRVPGM           
+ LoadModule proxy_connect_module /QSYS.LIB/QHTTPSVR.LIB/QZSRCORE.SRVPGM        
+ LoadModule proxy_wstunnel_module /QSYS.LIB/QHTTPSVR.LIB/QZSRCORE.SRVPGM       
+ Listen *:12345                                                                
+ DocumentRoot /www/SBMJOB/htdocs/TrainMeOnPowerRuby/current/public             
+ ProxyPass /cable ws://127.0.0.1:54321/cable                                   
+ ProxyPass / http://127.0.0.1:54321/                                           
+ ProxyPassReverse / http://127.0.0.1:54321/                                    
+```
+
+Verify that **Redis** server is running, start **Sidekiq** as in project **DE\_train\_04**, then restart the services:
+
+```
+POWER_RUBY/RAILSSVR ACTION(*START) APP('/www/SBMJOB/htdocs/TrainMeOnPowerRuby/current') VRM(*V24) PORT(54321)
+STRTCPSVR SERVER(*HTTP) HTTPSVR(SBMJOB) 
+```
+
+You can now play (and study) this new application by experimenting this peculiar remote commanding:
 
 <img src="images/submitted.png" alt="welcome" width="800"/>
 
+You can continue editing new command lines to submit. Issued commands will appear in **waiting** status and will end up into **completed** or **failed** status. 
+While waiting the Active Job Id will be visible in the third column, on completion it will be cleared or an error message will be visible because of a failure.
 
-There are a few tricky details to note:
+If a job is blocking the execution it is possible you will find a QSQSERV job in message waiting (the user profile is the one that sumbitted Sidekiq server).
 
-* the IBM i commands can include single quoted parameters that are handled with a global substitution (**gsub**)
+
+There are a few tricky source details to note:
+
+* the IBM i commands can include single quoted parameters that are handled with a global substitution (**gsub**) not to be considered in the total length passed to **QCMDEXEC**
 
 ```
   def perform(*args)                                          
@@ -261,4 +316,4 @@ There are a few tricky details to note:
     ActionCable.server.broadcast 'web_events_channel', job_id: job.job_id, request: arguments[0], status: 'waiting'          
 ``` 
 
-* when a long running command has been submitted (e.g. SAV) we can submit new ones that will be in **waiting** state 
+* when a long running command has been submitted (e.g. SAV) we can submit new ones that will be **waiting**  
