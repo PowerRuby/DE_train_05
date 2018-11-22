@@ -1,12 +1,12 @@
 class WebEventsChannel < ApplicationCable::Channel
   def subscribed
-    # stream_from "some_channel"
+    stream_from "web_events_channel"
   end
 
   def unsubscribed
-    # Any cleanup needed when channel is unsubscribed
   end
 
-  def sbmjob
+  def sbmjob(data)
+    CleverUtilityJob.perform_later(data['command'])
   end
 end
