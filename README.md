@@ -234,7 +234,7 @@ When a job with the specified Active Job id is not present it will appending the
 
 ## Playing with "sbmjob"
 
-Similarly to previous traininig projects you can easily install the project:
+Similarly to previous training projects you can easily install the project:
 
 ```
                     Simplify usage of Rails new (RAILSNEW)             
